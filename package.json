@@ -2,7 +2,7 @@
   "name": "satyajit-orbit-portfolio",
   "version": "1.0.0",
   "private": true,
-  "description": "Interactive 3D engineering portfolio with projects, journal, contact and moderated guestbook",
+  "description": "Futuristic 3D developer portfolio with PostgreSQL-backed content publishing",
   "type": "module",
   "scripts": {
     "dev": "node --watch server/index.mjs",
@@ -10,5 +10,10 @@
     "test": "node --test tests/*.test.mjs",
     "moderate": "node scripts/moderate.mjs"
   },
-  "engines": {"node": ">=20"}
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
 }
