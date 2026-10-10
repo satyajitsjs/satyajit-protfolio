@@ -4,7 +4,7 @@ import {mkdtemp,rm,readFile} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 const dataDir=await mkdtemp(path.join(os.tmpdir(),'orbit-integration-'));
-process.env.NODE_ENV='test';process.env.DATA_DIR=dataDir;process.env.ADMIN_TOKEN='an-unpredictable-local-test-token';
+process.env.NODE_ENV='test';process.env.DATA_DIR=dataDir;delete process.env.DATABASE_URL;process.env.ADMIN_TOKEN='an-unpredictable-local-test-token';
 const {server}=await import('../server/index.mjs');
 
 test('complete contact + moderated guestbook + admin + SEO flow',async()=>{
