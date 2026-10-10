@@ -46,7 +46,7 @@ export function renderDetail(p){
 }
 
 export async function hydrateContent(route){
- const dest=document.getElementById(route==='/journal'?'dynamic-blog-posts':route==='/thoughts'?'dynamic-thoughts':route==='/'?'homepage-posts':'dynamic-post-detail');
+ const dest=document.querySelector('#'+(route==='/journal'?'dynamic-blog-posts':route==='/thoughts'?'dynamic-thoughts':route==='/'?'homepage-posts':'dynamic-post-detail'));
  if(!dest)return;
  try{
   const url=route.startsWith('/journal/')?'/api/posts/'+encodeURIComponent(route.split('/').pop()):'/api/posts?kind='+ (route==='/thoughts'?'thought':'post');
