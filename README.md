@@ -6,10 +6,11 @@ A **complete, free, source-editable multi-page developer portfolio** for Satyaji
 
 ## Quick start
 
-**Requirements:** Node.js 20 or newer. No packages to install. No API keys required for basic local use.
+**Requirements:** Node.js 20 or newer. Run `npm install` first to install the optional PostgreSQL driver. No database credentials are required for local development; the Content Studio uses `data/posts.json` locally.
 
 ```bash
-# From the extracted project folder
+# From the repository folder
+npm install
 npm run dev
 ```
 
@@ -29,14 +30,71 @@ Then visit **http://localhost:4173**.
 | `/projects/kya-kare` | Kya Kare AI product case study |
 | `/experience` | Engineering experience timeline |
 | `/skills` | Tech stack and simplified architecture diagram |
-| `/journal` | Engineering notes / blog |
-| `/journal/<slug>` | Standalone articles |
+| `/journal` | Database-backed blog articles plus existing engineering notes |
+| `/journal/<slug>` | Published dynamic and existing static articles |
 | `/contact` | Working server-side contact form |
+| `/thoughts` | Short thoughts and LinkedIn-style updates |
 | `/guestbook` | Community comments, moderated before display |
 | `/lab` | Dedicated interactive 3D lab |
 | `/privacy` | Data handling and privacy starter notice |
 | `/links` | Public profiles, project demos and configurable resume/hackathon links |
 | `/admin` | Private admin dashboard for contact inbox and guestbook moderation |
+| `/admin/content` | Private Content Studio: create/edit/delete articles and thoughts |
+
+
+## Dynamic Content Studio — new feature branch
+
+Branch: `feat/content-studio-robot-glass` (based on `dev/portfolio-improvements`).
+`main` has **not** been edited and no GitHub Actions workflows were added.
+
+### Admin workflow
+
+1. Start the local server and open `http://localhost:4173/admin/content`.
+2. Set `ADMIN_TOKEN` to a strong value (16+ characters). Log in with that token; it remains in tab session storage.
+3. Choose **New content** and select **Blog post** or **Quick thought**.
+4. Paste the same text you used on LinkedIn. Add title, excerpt, category, and comma-separated tags.
+5. Paste **External image URL** (image must allow direct embedding) and optionally the original LinkedIn post URL. You do **not** upload or store the image.
+6. Click **Preview**, **Save** to keep a draft, or **Publish now** to make it public.
+7. Manage existing items from the searchable left column. Open, edit, unpublish (change visibility to Draft), or delete them.
+
+Public articles appear on `/journal`, selected latest articles appear on the homepage, and short thoughts appear on `/thoughts`. Dynamic journal details use `/journal/<slug>`. Existing hardcoded journal notes remain accessible.
+
+**Image warning:** LinkedIn often issues time-limited CDN URLs or blocks hotlinking, so copied `media.licdn.com` URLs may stop working. The editor previews the source and the public site displays a fallback if the image fails; the app never uses R2, S3 or local image uploads. A stable externally hosted public image URL is more reliable.
+
+### Database setup (production)
+
+This feature uses **PostgreSQL** when `DATABASE_URL` is configured (for example Neon, Railway PostgreSQL, or an existing managed PostgreSQL instance). Tables/indexes are created automatically at first access. The PostgreSQL driver `pg` is installed with `npm install`.
+
+```env
+# Put in local .env or in your host's private environment variables (never commit)
+ADMIN_TOKEN=replace-with-a-strong-private-token
+DATABASE_URL=postgresql://user:password@hostname:5432/db?sslmode=require
+SITE_URL=https://your-portfolio-domain.example
+```
+
+For a local-only demo, **omit DATABASE_URL**. Posts are stored in ignored `data/posts.json`; this supports persistent local editing as long as the folder exists.
+
+**Production requires DATABASE_URL** — the server refuses ephemeral local content storage when `NODE_ENV=production`, `VERCEL`, or `RAILWAY_ENVIRONMENT` is set. The existing guestbook and contact inbox continue using file storage; configure a persistent volume if you deploy those endpoints as a traditional Node server. Those file-backed endpoints are not yet converted to PostgreSQL.
+
+**Vercel notice:** This repo uses a custom Node HTTP server rather than a Next.js API framework. PostgreSQL works with its Node server, but deployment on Vercel requires adapting the server to Vercel Functions and routing. Please validate locally first; do not assume a simple static Vercel deployment will make the API durable.
+
+### Robot and UI improvements
+
+ORB-I now appears shortly after page load across public portfolio pages (not inside private admin), changes its guidance by section, and docks away near the footer. Its bubble can be closed and opened by clicking the robot. Content cards, the editor, typography, borders, and glass layering have been refined, with smaller mobile effects and reduced-motion support.
+
+### Test locally
+
+```powershell
+git fetch origin
+git switch feat/content-studio-robot-glass
+git pull origin feat/content-studio-robot-glass
+npm install
+npm test
+npm run dev
+```
+
+Test the admin at `/admin/content`, draft vs published feeds, `/journal`, `/thoughts`, the public image fallback, and robot on desktop/mobile. The new integration tests cover admin authorization, publishing, and external image URL handling. This branch has not been deployed or visually validated against real Vercel hosting.
+
 
 ## Interactive Skills Cube & Scroll Companion (development branch)
 
@@ -47,7 +105,7 @@ A matching **3-column Skills Cube panel** on the homepage displays the complete 
 with one skill per tile and a link to the full Skills directory. Switching categories does not
 overwrite the Rubik puzzle state; every sticker retains its original skill during twists.
 
-A friendly CSS-only assistant **ORB-I** appears/disappears at selected homepage scroll stages
+A friendly CSS-only assistant **ORB-I** appears shortly after loading public pages and changes its hints at scroll stages
 to introduce skills and projects. It can be dismissed and its message can be toggled.
 It is a guided tour, **not a chat service**.
 
