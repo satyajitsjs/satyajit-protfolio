@@ -40,7 +40,7 @@ function initScenes(){const canvas=document.querySelector('[data-cube]');if(!can
 function showSkillFace(index){const face=cubeSkillFaces[index];if(!face)return;activeScene?.setSkillFace(index);const name=document.getElementById('skill-face-heading'),tiles=document.getElementById('skill-tiles');if(name)name.textContent=face.name;if(tiles)tiles.innerHTML=skillTiles(face);document.querySelectorAll('[data-skill-face]').forEach(btn=>{const current=Number(btn.dataset.skillFace)===index;btn.classList.toggle('active',current);btn.setAttribute('aria-pressed',String(current));});}
 function initSkillDeck(){document.querySelectorAll('[data-skill-face]').forEach(btn=>btn.addEventListener('click',()=>showSkillFace(Number(btn.dataset.skillFace))));}
 let cleanupRobot=null;
-function initRobotGuide(){const guide=document.getElementById('orbit-guide');if(!guide)return;let hidden=false,stage=-1,raf=0;const segments=Array.from(document.querySelectorAll('main > section'));const script=[
+function initRobotGuide(){const guide=document.querySelector('#orbit-guide');if(!guide)return;let hidden=false,stage=-1,raf=0;const segments=Array.from(document.querySelectorAll('main > section'));const script=[
  'Meet the cube! Nine little skills on each face.',
  'Choose a face to see its 3 × 3 skill grid.',
  'Here are some projects built in the real world.',
