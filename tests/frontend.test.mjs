@@ -15,7 +15,9 @@ const routes={
  '/journal/rag-beyond-vector-search':['RAG is more','A useful retrieval pipeline'],
  '/contact':['contact-form','name="website"'],
  '/guestbook':['guestbook-form','guestbook-list'],
- '/lab':['data-cube="lab"','shuffle-lab'],
+ '/lab':['data-cube="lab"','data-move="R"','data-cube-action="reset"'],
+ '/links':['Links','GitHub','FutureCoin'],
+ '/projects/aptpath':['AptPath','THE CONTEXT'],
  '/admin':['admin-form','admin-dashboard'],
  '/privacy':['Respect for your','Data storage'],
 };
