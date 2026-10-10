@@ -38,6 +38,34 @@ Then visit **http://localhost:4173**.
 | `/links` | Public profiles, project demos and configurable resume/hackathon links |
 | `/admin` | Private admin dashboard for contact inbox and guestbook moderation |
 
+## Interactive Skills Cube & Scroll Companion (development branch)
+
+The existing 3×3 Rubik puzzle appearance and multi-axis twist engine are preserved.
+Each of the **six faces has nine independently labeled stickers (3 rows × 3 columns)**:
+Backend, AI/agents, Databases, Cloud/DevOps, Frontend, and Architecture/Security.
+A matching **3-column Skills Cube panel** on the homepage displays the complete technology names,
+with one skill per tile and a link to the full Skills directory. Switching categories does not
+overwrite the Rubik puzzle state; every sticker retains its original skill during twists.
+
+A friendly CSS-only assistant **ORB-I** appears/disappears at selected homepage scroll stages
+to introduce skills and projects. It can be dismissed and its message can be toggled.
+It is a guided tour, **not a chat service**.
+
+Mobile optimization includes offscreen Canvas pausing, fewer particles and satellites,
+a smaller Canvas pixel ratio, lower frame rate, and shorter orbit paths. The robot is
+shown only for early homepage stages on small screens, and reduced-motion settings are respected.
+
+Run from the development branch:
+
+```bash
+git switch dev/portfolio-improvements
+git pull origin dev/portfolio-improvements
+npm test
+npm run dev
+```
+
+No GitHub Actions workflow was added or changed. Merge into `main` only after local review.
+
 ## How the 3D background works
 
 The hero cube and the scrolling ambient scene are **computed in real time**, not exported images:
