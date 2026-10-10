@@ -110,7 +110,7 @@ async function handler(req,res){
   }
   if(pathname==='/sitemap.xml'){
     const base=(process.env.SITE_URL||`http://localhost:${PORT}`).replace(/\/$/,'');
-    const routes=[...safeRoutes].filter(x=>x!=='/admin'&&x!=='/lab'&&x!=='/guestbook');
+    const routes=[...safeRoutes].filter(x=>!x.startsWith('/admin')&&x!=='/lab'&&x!=='/guestbook');
     for(const p of projects)routes.push('/projects/'+p.slug);
     for(const a of articles)routes.push('/journal/'+a.slug);
     try{for(const p of await listPosts({kind:'post'}))routes.push('/journal/'+p.slug);}catch(err){console.warn('Dynamic sitemap entries unavailable:',err.message);}
@@ -132,6 +132,11 @@ async function handler(req,res){
    const title=project?.name||article?.title||dynamicPost?.title||slugs[pathname]||'Portfolio';
    html=html.replace(/<title>[^<]*<\/title>/,`<title>${escapeXml(title)} | Satyajit Sahoo</title>`);
    if(pathname.startsWith('/admin'))html=html.replace('</head>','<meta name="robots" content="noindex,nofollow" /></head>');
+   if(dynamicPost){
+    const summary=dynamicPost.excerpt||dynamicPost.content.slice(0,150);
+    html=html.replace(/<meta name="description"[^>]*>/,'<meta name="description" content="'+escapeXml(summary.slice(0,240))+'" />');
+    if(dynamicPost.imageUrl)html=html.replace('</head>','<meta property="og:image" content="'+escapeXml(dynamicPost.imageUrl)+'" /></head>');
+   }
    if(process.env.SITE_URL)html=html.replace('</head>',`<link rel="canonical" href="${escapeXml(process.env.SITE_URL.replace(/\/$/,'')+pathname)}" /></head>`);
    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','X-Content-Type-Options':'nosniff'});return res.end(req.method==='HEAD'?undefined:html);
   }
