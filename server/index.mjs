@@ -26,7 +26,7 @@ function json(res,code,data){res.writeHead(code,{'Content-Type':'application/jso
 function throttled(req,type,limit,windowMs){ const ip=req.socket.remoteAddress || 'unknown';const key=`${ip}:${type}`;const now=Date.now();const history=(rate.get(key)||[]).filter(t=>now-t<windowMs);if(history.length>=limit)return true;history.push(now);rate.set(key,history);return false; }
 async function body(req){const parts=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>MAX_BODY)throw Object.assign(new Error('Payload too large'),{status:413});parts.push(chunk);}try{return JSON.parse(Buffer.concat(parts).toString('utf8'));}catch{throw Object.assign(new Error('Invalid JSON'),{status:400});}}
 function escapeXml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
-const safeRoutes=new Set(['/','/about','/projects','/experience','/skills','/journal','/guestbook','/contact','/lab','/admin','/privacy']);
+const safeRoutes=new Set(['/','/about','/projects','/experience','/skills','/journal','/guestbook','/contact','/lab','/links','/admin','/privacy']);
 async function handler(req,res){
  try {
   const u = new URL(req.url,'http://localhost');
@@ -90,7 +90,7 @@ async function handler(req,res){
   }
   if(safeRoutes.has(pathname)||/^\/projects\/[a-z0-9-]+$/.test(pathname)||/^\/journal\/[a-z0-9-]+$/.test(pathname)){
    let html=await readFile(path.join(PUBLIC,'index.html'),'utf8');
-   const slugs={'/':'Backend & AI Engineer','/about':'About','/projects':'Projects','/experience':'Experience','/skills':'Skills','/journal':'Engineering Journal','/guestbook':'Guestbook','/contact':'Contact','/lab':'3D Lab','/admin':'Admin','/privacy':'Privacy'};
+   const slugs={'/':'Backend & AI Engineer','/about':'About','/projects':'Projects','/experience':'Experience','/skills':'Skills','/journal':'Engineering Journal','/guestbook':'Guestbook','/contact':'Contact','/lab':'3D Lab','/links':'Links & Demos','/admin':'Admin','/privacy':'Privacy'};
    const project=projects.find(x=>pathname==='/projects/'+x.slug), article=articles.find(x=>pathname==='/journal/'+x.slug);
    const title=project?.name||article?.title||slugs[pathname]||'Portfolio';
    html=html.replace(/<title>[^<]*<\/title>/,`<title>${escapeXml(title)} | Satyajit Sahoo</title>`);
