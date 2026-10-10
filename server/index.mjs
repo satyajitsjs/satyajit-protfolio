@@ -4,12 +4,13 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import crypto from 'node:crypto';
 import {projects,articles} from '../public/assets/js/content.js';
+import {listPosts,getPublicPost,upsertPost,deletePost,publicListItem} from './content-store.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(ROOT, 'public');
 const DATA = path.resolve(process.env.DATA_DIR || path.join(ROOT, 'data'));
 const PORT = Number(process.env.PORT || 4173);
-const MAX_BODY = 14_000;
+const MAX_BODY = 55_000;
 const rate = new Map();
 function adminAuthorized(req){const expected=process.env.ADMIN_TOKEN || ''; const token=(req.headers.authorization||'').replace(/^Bearer /,'');if(expected.length<16||token.length!==expected.length)return false;return crypto.timingSafeEqual(Buffer.from(expected),Buffer.from(token));}
 const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.pdf':'application/pdf','.woff2':'font/woff2','.txt':'text/plain; charset=utf-8'};
@@ -26,12 +27,45 @@ function json(res,code,data){res.writeHead(code,{'Content-Type':'application/jso
 function throttled(req,type,limit,windowMs){ const ip=req.socket.remoteAddress || 'unknown';const key=`${ip}:${type}`;const now=Date.now();const history=(rate.get(key)||[]).filter(t=>now-t<windowMs);if(history.length>=limit)return true;history.push(now);rate.set(key,history);return false; }
 async function body(req){const parts=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>MAX_BODY)throw Object.assign(new Error('Payload too large'),{status:413});parts.push(chunk);}try{return JSON.parse(Buffer.concat(parts).toString('utf8'));}catch{throw Object.assign(new Error('Invalid JSON'),{status:400});}}
 function escapeXml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
-const safeRoutes=new Set(['/','/about','/projects','/experience','/skills','/journal','/guestbook','/contact','/lab','/links','/admin','/privacy']);
+const safeRoutes=new Set(['/','/about','/projects','/experience','/skills','/journal','/thoughts','/guestbook','/contact','/lab','/links','/admin','/admin/content','/privacy']);
 async function handler(req,res){
  try {
   const u = new URL(req.url,'http://localhost');
   const pathname=decodeURIComponent(u.pathname).replace(/\/+$/,'')||'/';
-  if(pathname==='/api/health')return json(res,200,{ok:true,storage:'local-file',guestbook:'moderated'});
+  if(pathname==='/api/health')return json(res,200,{ok:true,contentStorage:process.env.DATABASE_URL?'postgresql':'local-development-only',guestbook:'moderated'});
+  // Public readers can only access published content. Admin writes use the existing private bearer token.
+  if(pathname==='/api/posts'&&req.method==='GET'){
+   const kind=u.searchParams.get('kind');
+   if(kind&&!['post','thought'].includes(kind))return json(res,400,{error:'Unknown content type.'});
+   const entries=await listPosts({kind,limit:150});
+   return json(res,200,{entries:entries.map(publicListItem)});
+  }
+  if(/^\/api\/posts\/[a-z0-9-]{3,90}$/.test(pathname)&&req.method==='GET'){
+   const slug=pathname.split('/').pop();
+   const entry=await getPublicPost(slug);
+   return json(res,entry?200:404,entry?{entry}:{error:'Post not found.'});
+  }
+  if(pathname==='/api/admin/posts'||/^\/api\/admin\/posts\/[a-f0-9-]{36}$/.test(pathname)){
+   if(!process.env.ADMIN_TOKEN||process.env.ADMIN_TOKEN.length<16)return json(res,503,{error:'Configure ADMIN_TOKEN to manage content.'});
+   if(throttled(req,'content-admin',150,60*60*1000))return json(res,429,{error:'Too many admin requests.'});
+   if(!adminAuthorized(req))return json(res,401,{error:'Unauthorized.'});
+   if(pathname==='/api/admin/posts'&&req.method==='GET'){
+    return json(res,200,{entries:await listPosts({includeDrafts:true,limit:500})});
+   }
+   if(pathname==='/api/admin/posts'&&req.method==='POST'){
+    const entry=await upsertPost(await body(req));return json(res,201,{entry});
+   }
+   const id=pathname.split('/').pop();
+   if(!/^[a-f0-9-]{36}$/.test(id))return json(res,400,{error:'Invalid ID.'});
+   if(req.method==='PUT'){
+    const entry=await upsertPost(await body(req),id);return json(res,200,{entry});
+   }
+   if(req.method==='DELETE'){
+    const removed=await deletePost(id);
+    return json(res,removed?200:404,removed?{ok:true}:{error:'Post not found.'});
+   }
+   return json(res,405,{error:'Method not allowed'});
+  }
   if(pathname.startsWith('/api/admin/')){
     if(!process.env.ADMIN_TOKEN||process.env.ADMIN_TOKEN.length<16)return json(res,503,{error:'Set ADMIN_TOKEN (at least 16 characters) to enable administration.'});
     if(throttled(req,'admin',60,60*60*1000))return json(res,429,{error:'Too many requests.'});
@@ -79,6 +113,7 @@ async function handler(req,res){
     const routes=[...safeRoutes].filter(x=>x!=='/admin'&&x!=='/lab'&&x!=='/guestbook');
     for(const p of projects)routes.push('/projects/'+p.slug);
     for(const a of articles)routes.push('/journal/'+a.slug);
+    try{for(const p of await listPosts({kind:'post'}))routes.push('/journal/'+p.slug);}catch(err){console.warn('Dynamic sitemap entries unavailable:',err.message);}
     const xml=`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${routes.map(x=>`<url><loc>${escapeXml(base+x)}</loc></url>`).join('')}</urlset>`;
     res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8'});return res.end(xml);
   }
@@ -90,10 +125,13 @@ async function handler(req,res){
   }
   if(safeRoutes.has(pathname)||/^\/projects\/[a-z0-9-]+$/.test(pathname)||/^\/journal\/[a-z0-9-]+$/.test(pathname)){
    let html=await readFile(path.join(PUBLIC,'index.html'),'utf8');
-   const slugs={'/':'Backend & AI Engineer','/about':'About','/projects':'Projects','/experience':'Experience','/skills':'Skills','/journal':'Engineering Journal','/guestbook':'Guestbook','/contact':'Contact','/lab':'3D Lab','/links':'Links & Demos','/admin':'Admin','/privacy':'Privacy'};
+   const slugs={'/':'Backend & AI Engineer','/about':'About','/projects':'Projects','/experience':'Experience','/skills':'Skills','/journal':'Engineering Journal','/thoughts':'Thoughts & Updates','/admin/content':'Content Studio','/guestbook':'Guestbook','/contact':'Contact','/lab':'3D Lab','/links':'Links & Demos','/admin':'Admin','/privacy':'Privacy'};
    const project=projects.find(x=>pathname==='/projects/'+x.slug), article=articles.find(x=>pathname==='/journal/'+x.slug);
-   const title=project?.name||article?.title||slugs[pathname]||'Portfolio';
+   let dynamicPost=null;
+   if(pathname.startsWith('/journal/')&&!article){try{dynamicPost=await getPublicPost(pathname.split('/').pop());}catch{}}
+   const title=project?.name||article?.title||dynamicPost?.title||slugs[pathname]||'Portfolio';
    html=html.replace(/<title>[^<]*<\/title>/,`<title>${escapeXml(title)} | Satyajit Sahoo</title>`);
+   if(pathname.startsWith('/admin'))html=html.replace('</head>','<meta name="robots" content="noindex,nofollow" /></head>');
    if(process.env.SITE_URL)html=html.replace('</head>',`<link rel="canonical" href="${escapeXml(process.env.SITE_URL.replace(/\/$/,'')+pathname)}" /></head>`);
    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','X-Content-Type-Options':'nosniff'});return res.end(req.method==='HEAD'?undefined:html);
   }
