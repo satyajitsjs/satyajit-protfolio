@@ -21,7 +21,7 @@ export function studioPage(){
 }
 
 export function initStudio(){
- const form=document.getElementById('studio-form');if(!form)return;
+ const form=document.querySelector('#studio-form');if(!form)return;
  const elements=form.elements,login=document.getElementById('studio-login'),main=document.getElementById('studio-main'),
  list=document.getElementById('studio-list'),message=document.getElementById('studio-message'),search=document.getElementById('studio-search');
  let entries=[],selected=null;
