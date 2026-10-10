@@ -72,7 +72,7 @@ DATABASE_URL=postgresql://user:password@hostname:5432/db?sslmode=require
 SITE_URL=https://your-portfolio-domain.example
 ```
 
-For a local-only demo, **omit DATABASE_URL**. Posts are stored in ignored `data/posts.json`; this supports persistent local editing as long as the folder exists.
+For a local-only demo, **omit DATABASE_URL**. Set `ADMIN_TOKEN` in your terminal or create a local `.env` file and run **`npm run dev:env`** (Node.js 20.6+). Ordinary `npm run dev` does not load `.env` automatically. On Windows PowerShell you can also run `$env:ADMIN_TOKEN='a-long-random-secret-for-local-testing'` before `npm run dev`. Posts are stored in ignored `data/posts.json`; this supports persistent local editing as long as the folder exists.
 
 **Production requires DATABASE_URL** — the server refuses ephemeral local content storage when `NODE_ENV=production`, `VERCEL`, or `RAILWAY_ENVIRONMENT` is set. The existing guestbook and contact inbox continue using file storage; configure a persistent volume if you deploy those endpoints as a traditional Node server. Those file-backed endpoints are not yet converted to PostgreSQL.
 
