@@ -27,3 +27,23 @@
 .admin-shell{padding:35px;min-height:250px}.admin-shell [hidden]{display:none!important}#admin-form input{padding:14px 16px;min-width:280px;max-width:100%;background:#0b132b;border:1px solid #6072b755;border-radius:12px;color:white}.admin-item{display:flex;align-items:center;justify-content:space-between;padding:23px;margin:13px 0;gap:20px}.admin-item h3{font-size:21px;margin:11px 0}.admin-item p{font-size:13px;white-space:pre-wrap;word-break:break-word}.admin-buttons{display:flex;gap:9px;flex-shrink:0}@media(max-width:720px){.admin-shell{padding:20px}.admin-item{display:block}.admin-buttons{margin-top:20px}#admin-form input{min-width:0;width:100%}}
 
 #world-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.65}#app{position:relative;z-index:1}.ambient{z-index:0}.site-header{z-index:1000}
+
+
+/* Full six-face Rubik lab and project/link library enhancements */
+.lab-stage .cube-canvas{touch-action:none;cursor:grab}
+.lab-stage .cube-canvas:active,.hero-canvas:active{cursor:grabbing}
+.cube-turn-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:19px}
+.turn-control{display:flex;gap:4px;border:1px solid rgba(111,142,219,.25);padding:5px;background:rgba(5,12,33,.55);border-radius:13px;min-width:0}
+.turn-control button{flex:1;min-width:0;min-height:39px;border:1px solid transparent;border-radius:9px;background:rgba(37,58,110,.5);color:#c7ddff;font:700 13px var(--display);transition:background .15s,border-color .15s,transform .15s}
+.turn-control button:hover,.turn-control button:focus-visible{background:linear-gradient(130deg,rgba(61,116,197,.65),rgba(109,62,183,.5));border-color:#7ed8ff;transform:translateY(-2px);outline:none}
+.cube-action-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}
+.cube-status{margin-top:14px;color:#91cfff;font:600 12px var(--font);min-height:20px}
+.links-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:65px}
+.external-link-card{display:flex;align-items:center;justify-content:space-between;min-height:98px;padding:23px 27px;gap:20px;font:700 16px var(--display);transition:transform .2s,border-color .2s,box-shadow .2s}
+.external-link-card strong{font-size:21px;color:#79dafa}
+.external-link-card:hover{transform:translateY(-4px);border-color:#62bcef;box-shadow:0 16px 45px rgba(12,56,141,.18)}
+.hero-link-hub{display:inline-flex;align-items:center;color:#aeeaff;font:700 12px var(--font);padding:12px 3px}
+.hero-link-hub:hover{text-decoration:underline}
+@media(max-width:1100px){.cube-turn-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.links-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.cube-turn-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.links-grid{grid-template-columns:1fr}.external-link-card{min-height:75px;padding:17px 21px}.cube-controls{gap:5px;white-space:nowrap}.cube-controls button{padding:9px 8px}.cube-controls-link{display:none}}
+@media(max-width:390px){.cube-turn-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cube-action-row .btn{width:100%}}
