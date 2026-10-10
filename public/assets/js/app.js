@@ -43,7 +43,7 @@ function showSkillFace(index){const face=cubeSkillFaces[index];if(!face)return;a
 function initSkillDeck(){document.querySelectorAll('[data-skill-face]').forEach(btn=>btn.addEventListener('click',()=>showSkillFace(Number(btn.dataset.skillFace))));}
 let cleanupRobot=null;
 function initRobotGuide(){
- const guide=document.getElementById('orbit-guide');if(!guide)return;
+ const guide=document.querySelector('#orbit-guide');if(!guide)return;
  let frame=0,closed=false,lastStage=-1,active=true;
  const route=location.pathname;
  const messages=route==='/thoughts'?['Welcome to my thoughts! ✨','These short notes began as lessons and ideas.','Tap a post to explore its original LinkedIn link.']:
