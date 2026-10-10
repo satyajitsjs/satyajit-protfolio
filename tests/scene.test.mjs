@@ -1,0 +1,14 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {CubeScene,BackdropField} from '../public/assets/js/cube3d.js';
+const calls={draw:0};
+const gradient={addColorStop(){}};
+const ctx=new Proxy({}, {get(target,name){if(name in target)return target[name];if(name==='createRadialGradient'||name==='createLinearGradient')return()=>gradient;return()=>{calls.draw++}},set(target,name,value){target[name]=value;return true}});
+const canvas={width:0,height:0,getContext(){return ctx},getBoundingClientRect(){return {width:640,height:640,left:0,top:0}},addEventListener(){},removeEventListener(){}};
+globalThis.ResizeObserver=class {observe(){} disconnect(){}};
+globalThis.matchMedia=()=>({matches:false});globalThis.devicePixelRatio=1;
+globalThis.window={addEventListener(){},removeEventListener(){},scrollY:0,innerHeight:900};
+globalThis.requestAnimationFrame=()=>1;globalThis.cancelAnimationFrame=()=>{};
+globalThis.innerWidth=1440;globalThis.innerHeight=900;globalThis.scrollY=0;
+globalThis.addEventListener=()=>{};globalThis.removeEventListener=()=>{};
+test('3D Rubik scene performs face projection and renders without runtime errors',()=>{const scene=new CubeScene(canvas);scene.draw(1000);assert.ok(calls.draw>500,`draw calls: ${calls.draw}`);scene.shuffle();scene.scroll=.9;scene.draw(2000);scene.destroy();});
+test('depth-animated ambient background projects wireframe cubes',()=>{const field=new BackdropField(canvas);field.render(1000);field.destroy();assert.ok(calls.draw>600);});

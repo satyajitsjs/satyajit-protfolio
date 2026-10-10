@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';process.env.NODE_ENV='test';
+const {validEmail,validGuest,validContact,server}=await import('../server/index.mjs');
+test('email validation',()=>{assert.ok(validEmail('person@example.com'));assert.ok(!validEmail('not-an-email'));});
+test('guestbook validation',()=>{assert.ok(validGuest({name:'Alex',message:'Great portfolio experience!'}));assert.ok(!validGuest({name:'A',message:'Hi'}));});
+test('contact validation',()=>{assert.ok(validContact({name:'Alex',email:'alex@example.com',subject:'Project inquiry',message:'Hello, I would like to talk about a project.'}));assert.ok(!validContact({name:'Alex',email:'oops',subject:'X',message:'hello'}));});
+test('health and page routes',async()=>{await new Promise(resolve=>server.listen(0,resolve));const base=`http://127.0.0.1:${server.address().port}`;try{for(const route of ['/','/about','/projects/fabricflow','/journal','/guestbook','/contact','/lab']){let r=await fetch(base+route);assert.equal(r.status,200,route);}const health=await(await fetch(base+'/api/health')).json();assert.equal(health.ok,true);assert.equal((await fetch(base+'/api/missing')).status,404);}finally{await new Promise(r=>server.close(r));}});
