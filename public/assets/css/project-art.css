@@ -1,6 +1,6 @@
 
 /* Original portfolio project miniatures, scoped to .pa- to avoid app UI collisions. */
-.project-art[class*="pa-art--"]{isolation:isolate;background:radial-gradient(ellipse at 50% 60%,var(--pa-glow,rgba(60,126,250,.24)),transparent 72%),linear-gradient(135deg,#101934,#070d20 73%)}
+.project-art[class*="pa-art--"]{height:248px;isolation:isolate;background:radial-gradient(ellipse at 50% 60%,var(--pa-glow,rgba(60,126,250,.24)),transparent 72%),linear-gradient(135deg,#101934,#070d20 73%)}
 .project-art.pa-art--fabricflow{--pa-accent:#79e5ff;--pa-glow:rgba(26,164,217,.23)}
 .project-art.pa-art--alphazero-hrms{--pa-accent:#b49cff;--pa-glow:rgba(133,92,232,.25)}
 .project-art.pa-art--kya-kare{--pa-accent:#e5aaff;--pa-glow:rgba(169,65,233,.25)}
@@ -15,7 +15,7 @@
 .project-art[class*="pa-art--"]::before{opacity:.55;background-size:24px 24px;transform:perspective(600px) rotateX(62deg) scale(1.8)}
 .project-art[class*="pa-art--"]::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(0deg,rgba(5,9,24,.5),transparent 27%,transparent 75%,rgba(12,17,39,.15))}
 .project-art[class*="pa-art--"] .art-index,.project-art[class*="pa-art--"] .art-label{z-index:5}
-.pa-scene{position:absolute;inset:31px 12px 24px;display:grid;place-items:center;z-index:2;overflow:visible;pointer-events:none;--pa-border:color-mix(in srgb,var(--pa-accent) 43%,transparent);font:600 10px/1.3 var(--font);color:#e4efff;letter-spacing:.075em}
+.pa-scene{position:absolute;inset:34px 12px 35px;display:grid;place-items:center;z-index:2;overflow:visible;pointer-events:none;--pa-border:color-mix(in srgb,var(--pa-accent) 43%,transparent);font:600 10px/1.3 var(--font);color:#e4efff;letter-spacing:.075em}
 .pa-scene::before{content:"";position:absolute;width:210px;height:120px;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--pa-glow);filter:blur(31px);border-radius:50%;pointer-events:none}
 .pa-scene *{box-sizing:border-box}
 .pa-floating{position:absolute;border:1px solid var(--pa-border);background:rgba(11,20,46,.86);box-shadow:0 8px 24px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.055);border-radius:8px;padding:7px 10px;backdrop-filter:blur(10px);white-space:nowrap;color:var(--pa-accent);font-size:8px}
@@ -122,7 +122,7 @@
 .pa-price-grid svg{width:100%;height:100%;overflow:visible}
 .pa-chart-bottom{display:flex;gap:8px;justify-content:space-around;font-size:7px;color:#9fd8c8}
 .pa-chart-line{stroke-dasharray:475;stroke-dashoffset:0;filter:drop-shadow(0 0 4px rgba(96,243,176,.6))}
-.pa-project-card:hover .pa-chart-line{stroke-dashoffset:1}
+/* Chart movement is decorative: data does not change on hover. */
 
 /* 10 - Ab Kya Kare: 2-wheeler incident assistance, not a generic safety badge */
 .pa-bike-badge{width:190px;height:122px;border:1px solid rgba(255,208,145,.45);border-radius:48% 48% 24% 24%;background:linear-gradient(140deg,#503b4b,#1e2448);display:grid;place-items:center;box-shadow:0 0 35px rgba(255,159,99,.13),inset 0 0 24px #ffc27a16}
@@ -153,3 +153,8 @@
 @keyframes pa-wave{50%{transform:translateY(5px) scaleY(.94)}}
 @media(max-width:460px){.pa-scene{transform:scale(.88)}.pa-kanban{width:280px}.pa-fabric-spec{right:0}.pa-fabric-fan{left:6%}}
 @media(prefers-reduced-motion:reduce){.pa-zodiac::before,.pa-wave-panel svg{animation:none!important}.pa-scene *{transition:none!important}}
+
+/* The full case study has enough room for the larger illustration. */
+.cube-card:not(.project-card) > .project-art[class*="pa-art--"]{height:325px}
+.cube-card:not(.project-card) > .project-art .pa-scene{transform:scale(1.12)}
+@media(max-width:700px){.cube-card:not(.project-card) > .project-art[class*="pa-art--"]{height:260px}.cube-card:not(.project-card) > .project-art .pa-scene{transform:scale(.94)}}
