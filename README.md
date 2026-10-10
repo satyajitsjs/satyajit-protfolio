@@ -35,15 +35,17 @@ Then visit **http://localhost:4173**.
 | `/guestbook` | Community comments, moderated before display |
 | `/lab` | Dedicated interactive 3D lab |
 | `/privacy` | Data handling and privacy starter notice |
+| `/links` | Public profiles, project demos and configurable resume/hackathon links |
 | `/admin` | Private admin dashboard for contact inbox and guestbook moderation |
 
 ## How the 3D background works
 
 The hero cube and the scrolling ambient scene are **computed in real time**, not exported images:
 
-- `public/assets/js/cube3d.js` implements actual 3D vertex geometry, 26 separately modeled cubies, 3D rotation, face normals, perspective projection and depth sorting.
+- `public/assets/js/cube3d.js` projects and animates 3D geometry with pointer/scroll interaction.
+- `public/assets/js/rubik.js` persists cubie positions and sticker orientation between face/slice turns.
 - Surface gradients, glowing outlines, tech markings, orbital rings, a projected holographic platform and small satellites are rendered into Canvas2D.
-- Pointer movement shifts the core's viewing angle. Scroll changes its rotation and gently separates the individual cubies. The **Twist the Cube** button actually turns the top layer by 90° through a smooth three-dimensional transformation.
+- Pointer movement shifts the core's viewing angle. Scroll changes its rotation and gently separates the individual cubies. Home has U/R/F controls; the **3D Lab** supports clockwise and counterclockwise R/L/U/D/F/B, middle M/E/S and whole cube X/Y/Z rotations, scramble and reset. Repeated moves change the puzzle state.
 - `BackdropField` places additional 3D rotating wireframe cubes behind the content on every page.
 - `/lab` contains a larger interactive cube scene.
 - Reduced-motion system preferences are respected and rendering is frame-throttled on smaller screens.
@@ -54,9 +56,10 @@ The hero cube and the scrolling ambient scene are **computed in real time**, not
 
 Edit **`public/assets/js/content.js`**:
 
-- `profile.name`, `profile.role`, `profile.location`, `profile.email` (public contact email if desired), `profile.github`, `profile.linkedin`.
-- `projects` (descriptions, technology stack, case-study highlights). Current projects are high-level examples; verify exact facts and permissions to share them publicly.
-- `skills`, `experience`, and `articles`.
+- Edit `profile.name`, `profile.role`, `profile.location`, `profile.email`, `profile.github`, `profile.linkedin`, and `profile.links`.
+- Add verified `profile.resume` and `profile.hackathon` URLs when available; they are intentionally blank. If a resume download is desired, use a direct PDF URL or put a PDF in `public/` and set `/resume.pdf`.
+- `projects` includes 11 selected work, SaaS, AI, IoT and experiments, with verified public links where possible. Review confidential client details and public availability.
+- `skills` now covers full backend, Django, GenAI, ML, cloud, databases, frontend, security and IoT categories. Review `experience` against your preferred public employment history before launch.
 
 If you want a resume download instead of the **Request my resume** contact CTA, place a PDF at `public/resume.pdf` and change the homepage button URL in `app.js` to `/resume.pdf` (regular anchor link; do not attach `data-link`).
 
@@ -129,9 +132,13 @@ Node.js 20.6+ can also read `.env` with `node --env-file=.env server/index.mjs`.
 npm test
 ```
 
-Automated tests cover API validation, server routes, HTML page-template rendering, 3D scene-rendering calculations, contact submission and data storage, pending guestbook moderation, admin authorization, approval, and public display.
+The local `tests/rubik.test.mjs` covers all face/slice rotations and inverses. Automated tests cover API validation, server routes, HTML page-template rendering, 3D scene-rendering calculations, contact submission and data storage, pending guestbook moderation, admin authorization, approval, and public display.
 
 **Visual test disclosure:** The automated Chromium environment blocked direct navigation to localhost. I instead injected the app assets into an isolated browser document to visually review desktop/mobile homepage, projects and contact layouts, and verified twist-button animation plus mobile navigation without JavaScript exceptions or horizontal overflow. This does **not** replace a full real-host, cross-browser and device test: run the app locally and check all routes before publishing.
+
+## Direct GitHub update
+
+No files under `.github/workflows` were added or modified. Pull `main`, run `npm test`, then `npm run dev`. Full local/browser tests of the pushed commit are still required.
 
 ## Directory layout
 
@@ -148,7 +155,8 @@ satyajit-orbit-portfolio/
 │       └── js/
 │           ├── app.js            # All routes, templates, interactions and forms
 │           ├── content.js        # Editable website content
-│           └── cube3d.js         # Cube and background 3D engines
+│           ├── cube3d.js         # 3D scene renderer
+│           └── rubik.js          # Persistent Rubik puzzle state
 ├── scripts/moderate.mjs          # Optional guestbook CLI moderation
 ├── tests/                        # No-network Node.js test suite
 ├── data/                         # Private runtime data (ignored by Git)
