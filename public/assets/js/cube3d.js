@@ -3,6 +3,7 @@
  * It uses actual 3D vertices/normals, view transforms, depth ordering and perspective;
  * it is NOT a video or a static image. */
 import {RubikState,rotateAxis} from './rubik.js';
+import {getSkillTile} from './cube-skills.js';
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 const mix=(a,b,t)=>a+(b-a)*t;
 const faces=[
@@ -29,21 +30,23 @@ const axisForPiece=cube=>cube.active?.axis??1;
 export class CubeScene{
  constructor(canvas,{compact=false}={}){
   this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:true});this.compact=compact;
-  this.running=true;this.frame=0;this.last=0;this.scroll=0;this.targetX=0;this.targetY=0;this.mouseX=0;this.mouseY=0;this.cube=new RubikState();this.dragging=false;this.orbitX=0;this.orbitY=0;this.motion=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  this.resize=()=>{const rect=this.canvas.getBoundingClientRect();this.w=rect.width;this.h=rect.height;this.dpr=Math.min(window.devicePixelRatio||1,1.6);canvas.width=Math.max(1,Math.round(rect.width*this.dpr));canvas.height=Math.max(1,Math.round(rect.height*this.dpr));};
+  this.running=true;this.frame=0;this.last=0;this.scroll=0;this.targetX=0;this.targetY=0;this.mouseX=0;this.mouseY=0;this.cube=new RubikState();this.skillFace=0;this.visible=true;this.mobile=matchMedia('(max-width: 700px)').matches;this.dragging=false;this.orbitX=0;this.orbitY=0;this.motion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  this.resize=()=>{const rect=this.canvas.getBoundingClientRect();this.w=rect.width;this.h=rect.height;this.dpr=Math.min(window.devicePixelRatio||1,this.mobile?1.15:1.6);canvas.width=Math.max(1,Math.round(rect.width*this.dpr));canvas.height=Math.max(1,Math.round(rect.height*this.dpr));};
   this.move=e=>{const r=canvas.getBoundingClientRect();if(this.dragging){this.orbitX+=(e.clientX-this.dragX)*.009;this.orbitY=clamp(this.orbitY+(e.clientY-this.dragY)*.008,-1.2,1.2);this.dragX=e.clientX;this.dragY=e.clientY;}this.targetX=((e.clientX-r.left)/r.width-.5)*1.1;this.targetY=((e.clientY-r.top)/r.height-.5)*.7;};
   this.down=e=>{this.dragging=true;this.dragX=e.clientX;this.dragY=e.clientY;canvas.setPointerCapture?.(e.pointerId);};
   this.up=()=>{this.dragging=false;};
   this.scrollListener=()=>{this.scroll=window.scrollY/Math.max(1,window.innerHeight);};
   this.observer=new ResizeObserver(this.resize);this.observer.observe(canvas);
+  this.visibilityObserver=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(entries=>{this.visible=entries.some(e=>e.isIntersecting);},{rootMargin:'140px'}):null;this.visibilityObserver?.observe(canvas);
   canvas.addEventListener('pointermove',this.move);canvas.addEventListener('pointerdown',this.down);canvas.addEventListener('pointerup',this.up);canvas.addEventListener('pointercancel',this.up);window.addEventListener('scroll',this.scrollListener,{passive:true});this.resize();this.scrollListener();this.tick=ts=>this.draw(ts);this.raf=requestAnimationFrame(this.tick);
  }
+ setSkillFace(index){if(Number.isInteger(index)&&index>=0&&index<6)this.skillFace=index;}
  shuffle(){this.turn('U');}
  turn(move){return this.cube.move(move);}
  scramble(){this.cube.scramble();}
  reset(){this.cube.reset();}
- destroy(){this.running=false;cancelAnimationFrame(this.raf);this.observer.disconnect();this.canvas.removeEventListener('pointermove',this.move);this.canvas.removeEventListener('pointerdown',this.down);this.canvas.removeEventListener('pointerup',this.up);this.canvas.removeEventListener('pointercancel',this.up);window.removeEventListener('scroll',this.scrollListener);}
- draw(ts){if(!this.running||!this.ctx)return;this.raf=requestAnimationFrame(this.tick);if(ts-this.last<(this.compact?32:16))return;const dt=this.last?(ts-this.last)/1000:1/60;this.last=ts;this.cube.update(dt);
+ destroy(){this.running=false;cancelAnimationFrame(this.raf);this.observer.disconnect();this.visibilityObserver?.disconnect();this.canvas.removeEventListener('pointermove',this.move);this.canvas.removeEventListener('pointerdown',this.down);this.canvas.removeEventListener('pointerup',this.up);this.canvas.removeEventListener('pointercancel',this.up);window.removeEventListener('scroll',this.scrollListener);}
+ draw(ts){if(!this.running||!this.ctx)return;this.raf=requestAnimationFrame(this.tick);if(!this.visible||document.visibilityState==='hidden')return;if(ts-this.last<(this.mobile?42:this.compact?32:16))return;const dt=this.last?(ts-this.last)/1000:1/60;this.last=ts;this.cube.update(dt);
   const ctx=this.ctx,w=this.w,h=this.h;if(w<1||h<1)return;ctx.setTransform(this.dpr,0,0,this.dpr,0,0);ctx.clearRect(0,0,w,h);
   const t=this.motion?0:ts*.001;
   const cx=w*.51,cy=h*(this.compact?.49:.49),size=Math.min(w,h)*(this.compact?.136:.125);
@@ -57,6 +60,7 @@ export class CubeScene{
   let bloom=ctx.createRadialGradient(cx,cy,12,cx,cy,Math.min(w,h)*.53);
   bloom.addColorStop(0,'rgba(79,63,180,.17)');bloom.addColorStop(.5,'rgba(29,77,167,.055)');bloom.addColorStop(1,'rgba(11,16,47,0)');ctx.fillStyle=bloom;ctx.fillRect(0,0,w,h);
   for(const [i,star] of stars.entries()){
+   if(this.mobile&&i%2)continue;
    let sx=((star.x+1)%1)*w,sy=((star.y+1)%1)*h;
    let alpha=.14+.22*Math.abs(Math.sin(t*.43+star.p));if(this.motion)alpha=.25;
    ctx.fillStyle=`rgba(133,180,255,${alpha})`;ctx.beginPath();ctx.arc(sx,sy,star.s,0,7);ctx.fill();
@@ -84,7 +88,7 @@ export class CubeScene{
       const normal=rotate(rotateAxis(face.n,axis,twist),pitch,yaw,roll);
       const avgZ=verts.reduce((s,v)=>s+v[2],0)/4;
       const sticker=c.stickers.find(s=>s.normal.every((n,i)=>n===face.n[i]));
-      return {face:sticker?faces[sticker.index]:{...face,shade:'#080e20',tint:'#35466a'},verts,normal,avgZ,c};
+      return {face:sticker?faces[sticker.index]:{...face,shade:'#080e20',tint:'#35466a'},stickerIndex:sticker?.index??null,verts,normal,avgZ,c};
     });
     for(const f of body)if(f.normal[2]>.02)drawables.push(f);
   }
@@ -105,14 +109,22 @@ export class CubeScene{
     poly(ctx,tile,sh,null);
     ctx.strokeStyle='rgba(206,228,255,.33)';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(...tile[3]);ctx.lineTo(...tile[0]);ctx.lineTo(...tile[1]);ctx.stroke();
     ctx.restore();
-    const p=point(rotate(rotateAxis(f.c.pos.map(v=>v*.997),axisForPiece(this.cube),this.cube.affects(f.c)?this.cube.angle:0),pitch,yaw,roll),cx,cy,size);
-    ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`600 ${Math.max(8,size*.14)}px Space Grotesk,sans-serif`;ctx.fillStyle=outline;ctx.globalAlpha=.47+visibility*.23;
-    const glyphs=['AI','<>','✦','DB','{ }','⚡','ML','01','⌘'];
-    const gi=f.c.id%glyphs.length;
-    ctx.shadowColor=outline;ctx.shadowBlur=7;ctx.fillText(glyphs[gi],(core[0][0]+core[2][0])/2,(core[0][1]+core[2][1])/2);ctx.restore();
+    // Each visible sticker retains its original skill even after multi-axis twists.
+    const skill=f.stickerIndex===null?null:getSkillTile(f.stickerIndex,f.c.id);
+    if(skill){
+      const centerX=(core[0][0]+core[2][0])/2,centerY=(core[0][1]+core[2][1])/2;
+      const tileWidth=Math.hypot(core[1][0]-core[0][0],core[1][1]-core[0][1]);
+      const fontSize=clamp(Math.min(size*.15,tileWidth/Math.max(skill.short.length*.68,2.5)),this.mobile?7:8,this.mobile?13:17);
+      const selected=skill.faceIndex===this.skillFace;
+      ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font=`700 ${fontSize.toFixed(1)}px Space Grotesk,sans-serif`;
+      ctx.fillStyle=selected?'#e9faff':outline;ctx.globalAlpha=clamp(.50+visibility*.22+(selected?.15:0),.45,1);
+      ctx.shadowColor=selected?skill.accent:outline;ctx.shadowBlur=selected?11:4;
+      ctx.fillText(skill.short,centerX,centerY,Math.max(8,tileWidth*.84));ctx.restore();
+    }
     // Tiny luminous tech lines in each cubie, deliberately subtle.
     ctx.strokeStyle='rgba(189,219,255,.3)';ctx.lineWidth=.65;const d=inset(q,.39);ctx.beginPath();ctx.moveTo(...d[0]);ctx.lineTo(...d[1]);ctx.stroke();
-    if(f.c.id===13&&f.face.n[2]===1){ctx.save();ctx.font=`bold ${Math.max(10,size*.22)}px Space Grotesk, sans-serif`;ctx.textAlign='center';ctx.fillStyle='#b9d8ff';ctx.shadowBlur=15;ctx.shadowColor='#73a2ff';ctx.fillText('</>',p[0],p[1]);ctx.restore();}
+    
   }
   // Secondary floating mini cubes (also 3D, not flat sprites).
   for(const [i,s] of satellites.entries()){
